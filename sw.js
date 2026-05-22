@@ -1,4 +1,4 @@
-const CACHE_NAME = 'disaster-mnply-v1';
+const CACHE_NAME = 'disaster-mnply-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const ASSETS = [
 
 // Install event: cache assets
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching all: app shell and content');
@@ -65,6 +66,6 @@ self.addEventListener('activate', (e) => {
           return caches.delete(key);
         }
       }));
-    })
+    }).then(() => self.clients.claim())
   );
 });

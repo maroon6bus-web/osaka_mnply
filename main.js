@@ -660,9 +660,15 @@ function updateTokenPositions() {
             const rect = spaceEl.getBoundingClientRect();
             const boardRect = boardElement.getBoundingClientRect();
 
+            // 画面サイズに応じて駒の配置間隔を調整（スマホでは狭くする）
+            const isMobile = window.innerWidth <= 1024;
+            const step = isMobile ? 12 : 15; // 駒同士の間隔
+            const paddingX = isMobile ? 4 : 10; // 左からの余白
+            const paddingY = isMobile ? 4 : 10; // 上からの余白
+
             // Adjust position slightly based on player ID to prevent overlap
-            const offsetX = (player.id % 2) * 15 + 10;
-            const offsetY = Math.floor(player.id / 2) * 15 + 10;
+            const offsetX = (player.id % 2) * step + paddingX;
+            const offsetY = Math.floor(player.id / 2) * step + paddingY;
 
             token.style.left = `${spaceEl.offsetLeft + offsetX}px`;
             token.style.top = `${spaceEl.offsetTop + offsetY}px`;
@@ -683,7 +689,7 @@ function updatePlayerStats() {
         card.innerHTML = `
             <div class="player-info">
                 <div class="player-icon" style="background-color: ${player.color}"></div>
-                <div class="player-name">${player.name}${i === currentPlayerIndex ? ' <span style="font-size: 0.8rem; opacity: 0.8;">(手番)</span>' : ''}</div>
+                <div class="player-name">${player.name}${i === currentPlayerIndex ? ' <span class="turn-text" style="font-size: 0.8rem; opacity: 0.8;">(手番)</span>' : ''}</div>
             </div>
             <div class="player-money">$${player.money}</div>
         `;
@@ -994,6 +1000,7 @@ function triggerOsakaEvent() {
 function refreshEventUI() {
     if (!activeEvent) {
         activeEventDisplay.style.display = 'none';
+        updateTokenPositions();
         return;
     }
     eventText.innerText = `【${activeEvent.name}】${activeEvent.text} (あと${activeEvent.duration}ターン)`;
@@ -2502,3 +2509,31 @@ function updatePropertyChart() {
     landChart.update();
     buildingChart.update();
 }
+
+// 画面サイズが変更されたときに駒の位置とサイコロの配置を調整する
+window.addEventListener('resize', () => {
+    if (typeof gameEnded !== 'undefined' && !gameEnded) {
+        updateTokenPositions();
+    }
+    
+    // コマンドエリア（サイコロ＋ボタン）全体をモバイル（盤面中央）とPC（サイドバー）で切り替える
+    const actions = document.querySelector('.actions');
+    const boardWrapper = document.querySelector('.board-wrapper');
+    const sidebar = document.querySelector('.sidebar');
+    const playerStats = document.getElementById('player-stats');
+    
+    if (actions && boardWrapper && sidebar && playerStats) {
+        if (window.innerWidth <= 1024) {
+            if (actions.parentElement !== boardWrapper) {
+                boardWrapper.appendChild(actions);
+            }
+        } else {
+            if (actions.parentElement !== sidebar) {
+                sidebar.insertBefore(actions, playerStats.nextSibling);
+            }
+        }
+    }
+});
+
+// 初期化時に一度呼び出して配置を適用する
+window.dispatchEvent(new Event('resize'));

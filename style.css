@@ -1010,3 +1010,313 @@ body {
     background: rgba(59, 130, 246, 0.4);
     border: 1px solid #60a5fa;
 }
+
+/* ==========================================================================
+   Responsive Styles for Mobile Devices
+   ========================================================================== */
+@media (max-width: 768px) {
+    .screen {
+        overflow-y: auto;
+    }
+
+    /* スタート画面のレスポンシブ化 */
+    .start-container {
+        padding: 1.5rem;
+        width: 90%;
+        max-width: 400px;
+        margin: 2rem auto;
+        border-radius: 1rem;
+    }
+
+    .start-container h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .player-select {
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .dynamic-name-container {
+        margin: 1rem auto;
+        gap: 0.75rem;
+        grid-template-columns: 1fr;
+    }
+
+    .name-input-group {
+        padding: 0.8rem;
+    }
+
+    .name-input-group input {
+        padding: 0.6rem;
+        font-size: 1rem;
+    }
+
+    .menu-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .game-container {
+        flex-direction: column;
+        height: auto;
+        padding: 0.5rem;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    /* 盤面エリアをサイドバーの下に配置 */
+    .board-wrapper {
+        width: 100%;
+        max-width: 100vw;
+        padding: 0.25rem;
+        border-radius: 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    #board {
+        /* スマホの横幅いっぱいに近いサイズにする */
+        width: 95vw;
+        height: 95vw;
+        max-width: 500px;
+        max-height: 500px;
+        margin: 0 auto;
+    }
+
+    /* スマホでは中央のグラフを非表示にして盤面を見やすくする */
+    #chart-container {
+        display: none;
+    }
+
+    /* 盤面のマス内の文字サイズ調整 */
+    .space {
+        font-size: 0.55rem;
+    }
+
+    .space-name {
+        font-size: 0.5rem;
+        padding: 1px 2px;
+        margin-top: 1px;
+    }
+
+    .space-price {
+        font-size: 0.55rem;
+        padding-bottom: 1px;
+    }
+
+    /* 角のマスの文字サイズ */
+    .space.corner {
+        font-size: 0.65rem;
+    }
+
+    /* 家・ホテルのアイコンサイズ */
+    .house-container {
+        top: 1px;
+        gap: 1px;
+    }
+    
+    .house-icon {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .hotel-icon {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* オーナーインジケーターの高さ */
+    .owner-indicator {
+        height: 4px;
+    }
+
+    /* トークンサイズ */
+    .token {
+        width: 12px;
+        height: 12px;
+        border-width: 1px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* サイドバー（上にメッセージやサイコロを表示するエリア） */
+    .sidebar {
+        width: 100%;
+        order: -1; /* 盤面の上に配置 */
+        gap: 0.75rem;
+    }
+
+    .turn-info {
+        padding: 0.75rem;
+    }
+
+    .turn-info h2 {
+        font-size: 1.2rem;
+    }
+
+    /* プレイヤーのステータスエリアをコンパクトに */
+    .player-stats {
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .player-card {
+        flex: 0 0 150px; /* 横スクロールできるように固定幅に */
+        padding: 0.6rem 0.8rem;
+        border-radius: 0.75rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        border-left-width: 4px;
+    }
+
+    .player-card.active {
+        transform: scale(1.02);
+        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    }
+
+    .player-info {
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .player-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .player-name {
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 90px;
+    }
+
+    .player-money {
+        font-size: 0.95rem;
+        align-self: flex-end;
+    }
+
+    /* アクションエリア */
+    .actions {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    #dice-container {
+        gap: 1rem;
+    }
+
+    .dice {
+        width: 45px;
+        height: 45px;
+        font-size: 1.5rem;
+        border-radius: 0.5rem;
+    }
+
+    .action-btn {
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    /* ログパネル */
+    .log-panel {
+        padding: 0.75rem;
+        height: 120px;
+    }
+
+    .log-panel h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    #log-messages {
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+
+    /* 地価変動メッセージ */
+    #center-message {
+        padding: 1rem 1.5rem;
+        min-width: 260px;
+        border-width: 2px;
+    }
+
+    #center-message h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #center-message p {
+        font-size: 1rem;
+    }
+
+    /* モーダル */
+    .modal-content {
+        padding: 1.5rem;
+        border-radius: 1rem;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .modal-content p {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* カード系モーダル (チャンス, 災害, 土地行政) */
+    .chance-card, .disaster-card, .land-admin-card {
+        border-width: 4px;
+        border-radius: 1rem;
+        padding: 1rem;
+        height: auto;
+        min-height: 250px;
+    }
+
+    .chance-header, .disaster-header, .land-admin-header {
+        font-size: 2rem;
+    }
+
+    .chance-text, .disaster-text, .land-admin-text {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .disaster-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .disaster-type, .land-admin-type {
+        font-size: 1.3rem;
+    }
+
+    /* BGMボタン */
+    .bgm-btn {
+        bottom: 1rem;
+        right: 1rem;
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+}
