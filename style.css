@@ -1019,6 +1019,11 @@ body {
         overflow-y: auto;
     }
 
+    .next-level-text {
+        font-size: 0.75em;
+        color: #94a3b8; /* slightly dimmed color to make it less prominent */
+    }
+
     /* スタート画面のレスポンシブ化 */
     .start-container {
         padding: 1.5rem;

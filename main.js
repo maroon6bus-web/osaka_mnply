@@ -1066,7 +1066,7 @@ function openBuildModal() {
             item.innerHTML = `
                 <div class="build-item-info">
                     <div class="build-item-color" style="background-color: ${space.color}"></div>
-                    <span>${space.name} (${nextLevel})</span>
+                    <span>${space.name} <span class="next-level-text">(${nextLevel})</span></span>
                     <span style="color: #4ade80; margin-left: 10px;">-$${cost}</span>
                 </div>
                 <button class="build-action-btn" ${!canAfford ? 'disabled' : ''}>建築する</button>
