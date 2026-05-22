@@ -1,7 +1,7 @@
 {
-  "name": "Disaster Monopoly",
-  "short_name": "Monopoly",
-  "description": "A disaster-themed monopoly board game.",
+  "name": "Osaka Monopoly",
+  "short_name": "Osaka Mnply",
+  "description": "An Osaka-themed monopoly board game.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",

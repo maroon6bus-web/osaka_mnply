@@ -1,4 +1,4 @@
-const CACHE_NAME = 'disaster-mnply-v3';
+const CACHE_NAME = 'osaka-mnply-v1';
 const ASSETS = [
   './',
   './index.html',
