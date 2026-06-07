@@ -91,10 +91,21 @@
                 font-size: 1.2rem !important;
             }
 
-            #start-game-btn {
+            #start-buttons-container {
                 margin-top: 1.5rem !important;
-                padding: 1rem !important;
-                font-size: 1.3rem !important;
+                display: none;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+
+            .start-mode-btn {
+                padding: 0.8rem !important;
+                font-size: 1.2rem !important;
+                line-height: 1.3 !important;
+            }
+
+            .start-mode-btn span {
+                font-size: 0.75rem !important;
             }
 
             /* ゲーム画面のレスポンシブ化 */
@@ -456,8 +467,23 @@
             <div id="dynamic-name-inputs" class="dynamic-name-container">
                 <!-- Name inputs will be generated here -->
             </div>
-            <button id="start-game-btn" class="menu-btn"
-                style="display: none; margin-top: 2rem; background: #3b82f6; width: 100%;">ゲーム開始</button>
+            <div id="start-buttons-container" style="display: none; flex-direction: column; gap: 0.75rem; margin-top: 2rem; width: 100%;">
+                <button id="start-deathmatch-btn" class="menu-btn start-mode-btn"
+                    style="background: linear-gradient(135deg, #ef4444, #b91c1c); width: 100%; border: 1px solid rgba(239, 68, 68, 0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                    デスマッチモードで開始<br>
+                    <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.9;">(誰かが破産するまで)</span>
+                </button>
+                <button id="start-circuit-short-btn" class="menu-btn start-mode-btn"
+                    style="background: linear-gradient(135deg, #22c55e, #15803d); width: 100%; border: 1px solid rgba(34, 197, 94, 0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                    ショートサーキットで開始<br>
+                    <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.9;">(10周・3位まで完走🏆ボーナスあり)</span>
+                </button>
+                <button id="start-circuit-btn" class="menu-btn start-mode-btn"
+                    style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); width: 100%; border: 1px solid rgba(59, 130, 246, 0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                    フルサーキットモードで開始<br>
+                    <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.9;">(誰かが20周するまで)</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -478,6 +504,29 @@
                 <div id="center-message">
                     <h3>📈 地価変動発生！</h3>
                     <p id="center-message-text"></p>
+                </div>
+                <!-- GO通過時の周回数表示用 -->
+                <div id="lap-clear-message" style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0.8);
+                    background: rgba(15, 23, 42, 0.95);
+                    padding: 2rem 3rem;
+                    border-radius: 1rem;
+                    color: #fff;
+                    text-align: center;
+                    border: 3px solid #3b82f6;
+                    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+                    z-index: 60;
+                    pointer-events: none;
+                    opacity: 0;
+                    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    min-width: 300px;
+                ">
+                    <h3 style="font-size: 1.8rem; margin-bottom: 0.8rem; color: #60a5fa; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-top: 0;">🏁 GO通過！</h3>
+                    <p id="lap-clear-player" style="font-size: 1.3rem; margin-bottom: 0.5rem; font-weight: bold;"></p>
+                    <p id="lap-clear-count" style="font-size: 1.8rem; font-weight: bold; color: #4ade80; margin-bottom: 0;"></p>
                 </div>
             </div>
 
@@ -652,6 +701,10 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold;">
                     <span>合計資産</span><span id="player-info-total" style="color: #eab308;"></span>
+                </div>
+                <div id="player-info-laps-row"
+                    style="display: none; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <span>周回数</span><span id="player-info-laps" style="font-weight: bold; color: #60a5fa;"></span>
                 </div>
                 <div
                     style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 2px dashed rgba(255,255,255,0.1);">

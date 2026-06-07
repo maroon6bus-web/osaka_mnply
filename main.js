@@ -55,6 +55,11 @@ BOARD_SPACES.forEach(space => {
 const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308'];
 let players = [];
 let gameEnded = false;
+let gameMode = 'deathmatch'; // 'deathmatch' | 'circuit' | 'circuit-short'
+let circuitFinishers = []; // ショートサーキットでゴールした順 [{player, rank, bonus}]
+const CIRCUIT_SHORT_LAPS = 10;
+const CIRCUIT_SHORT_FINISHER_COUNT = 3; // 3位までゴールしたら終了
+const CIRCUIT_SHORT_BONUSES = [500, 200, 50]; // 1位,2位,3位のボーナス
 let currentPlayerIndex = 0;
 let diceValue = 0;
 let doubleCount = 0;
@@ -91,7 +96,9 @@ function saveGame() {
         })),
         currentPlayerIndex: currentPlayerIndex,
         roundHistory: roundHistory,
-        activeEvent: activeEvent
+        activeEvent: activeEvent,
+        gameMode: gameMode,
+        circuitFinishers: circuitFinishers
     };
     localStorage.setItem("monopoly_save", JSON.stringify(saveData));
 }
@@ -101,9 +108,12 @@ function loadGame() {
     if (!saved) return;
     const data = JSON.parse(saved);
 
+    gameMode = data.gameMode || 'deathmatch';
+    circuitFinishers = data.circuitFinishers || [];
     players = data.players.map(p => {
         // 古いセーブデータとの互換性のために、欠落しているプロパティを初期化
         if (p.insuranceGOPasses === undefined) p.insuranceGOPasses = 0;
+        if (p.laps === undefined) p.laps = 0;
         return p;
     });
     currentPlayerIndex = data.currentPlayerIndex;
@@ -396,7 +406,7 @@ document.querySelectorAll('.player-count-btn').forEach(btn => {
         generateNameInputs(humanCount);
 
         // 開始ボタンを表示
-        document.getElementById('start-game-btn').style.display = 'block';
+        document.getElementById('start-buttons-container').style.display = 'flex';
     });
 });
 
@@ -429,7 +439,7 @@ function generateNameInputs(count) {
     }
 }
 
-document.getElementById('start-game-btn').addEventListener('click', () => {
+function handleStartGameClick() {
     initAudio();
     playClickSound();
 
@@ -448,6 +458,21 @@ document.getElementById('start-game-btn').addEventListener('click', () => {
     }
 
     startGame(selectedHumanCount, customNames);
+}
+
+document.getElementById('start-deathmatch-btn').addEventListener('click', () => {
+    gameMode = 'deathmatch';
+    handleStartGameClick();
+});
+
+document.getElementById('start-circuit-btn').addEventListener('click', () => {
+    gameMode = 'circuit';
+    handleStartGameClick();
+});
+
+document.getElementById('start-circuit-short-btn').addEventListener('click', () => {
+    gameMode = 'circuit-short';
+    handleStartGameClick();
 });
 
 function resetBoardState() {
@@ -464,6 +489,8 @@ function resetBoardState() {
 function startGame(humanCount, customNames = []) {
     resetBoardState();
     players = [];
+    gameEnded = false;
+    circuitFinishers = [];
     for (let i = 0; i < 4; i++) {
         let name;
         if (i < humanCount) {
@@ -488,7 +515,8 @@ function startGame(humanCount, customNames = []) {
             jailTurns: 0,
             properties: [],
             hasInsurance: false,
-            insuranceGOPasses: 0
+            insuranceGOPasses: 0,
+            laps: 0
         });
     }
 
@@ -978,10 +1006,80 @@ function showPlayerDetail(player) {
     playerInfoAssets.innerText = `$${landSum + houseSum}`;
     playerInfoTotal.innerText = `$${player.money + landSum + houseSum}`;
 
+    // 周回数の表示（サーキット系モードの時のみ）
+    const lapsRow = document.getElementById('player-info-laps-row');
+    const lapsEl = document.getElementById('player-info-laps');
+    if (lapsRow && lapsEl) {
+        if (gameMode === 'circuit') {
+            lapsRow.style.display = 'flex';
+            lapsEl.innerText = `${player.laps || 0} / 20`;
+        } else if (gameMode === 'circuit-short') {
+            lapsRow.style.display = 'flex';
+            const finisher = circuitFinishers.find(f => f.player.id === player.id);
+            if (finisher) {
+                const medals = ['🥇', '🥈', '🥉'];
+                lapsEl.innerText = `${player.laps || 0} / ${CIRCUIT_SHORT_LAPS}  ${medals[finisher.rank - 1] || ''} ゴール！(+$${finisher.bonus})`;
+                lapsEl.style.color = '#fbbf24';
+            } else {
+                lapsEl.innerText = `${player.laps || 0} / ${CIRCUIT_SHORT_LAPS}`;
+                lapsEl.style.color = '#60a5fa';
+            }
+        } else {
+            lapsRow.style.display = 'none';
+        }
+    }
+
     playerInfoInsurance.innerText = player.hasInsurance ? `加入中 (あと${player.insuranceGOPasses}回通過まで) ✅` : '未加入 ❌';
     playerInfoInsurance.style.color = player.hasInsurance ? '#4ade80' : '#ef4444';
 
     playerInfoModal.classList.add('active');
+}
+
+let lapClearTimeout = null;
+
+function showLapClear(player, isGoal = false, goalRank = null) {
+    const lapClearMessage = document.getElementById('lap-clear-message');
+    const lapClearPlayer = document.getElementById('lap-clear-player');
+    const lapClearCount = document.getElementById('lap-clear-count');
+    const lapClearTitle = lapClearMessage ? lapClearMessage.querySelector('h3') : null;
+
+    if (!lapClearMessage || !lapClearPlayer || !lapClearCount) return;
+
+    const maxLaps = gameMode === 'circuit-short' ? CIRCUIT_SHORT_LAPS : 20;
+
+    if (isGoal && goalRank !== null) {
+        const medals = ['🥇', '🥈', '🥉'];
+        const bonuses = CIRCUIT_SHORT_BONUSES;
+        const medal = medals[goalRank - 1] || '🏁';
+        const bonus = bonuses[goalRank - 1] || 0;
+        if (lapClearTitle) lapClearTitle.innerText = `${medal} ゴール！${goalRank}位 完走！`;
+        lapClearPlayer.innerText = player.name;
+        lapClearPlayer.style.color = player.color;
+        lapClearCount.innerText = `ボーナス +$${bonus}`;
+        lapClearCount.style.color = '#fbbf24';
+    } else {
+        if (lapClearTitle) lapClearTitle.innerText = '🏁 GO通過！';
+        lapClearPlayer.innerText = player.name;
+        lapClearPlayer.style.color = player.color;
+        lapClearCount.innerText = `${player.laps} / ${maxLaps}`;
+        lapClearCount.style.color = '#4ade80';
+    }
+
+    // 以前のタイマーが動いていればクリアする
+    if (lapClearTimeout) {
+        clearTimeout(lapClearTimeout);
+    }
+
+    // メッセージを表示
+    lapClearMessage.style.opacity = '1';
+    lapClearMessage.style.transform = 'translate(-50%, -50%) scale(1)';
+
+    // 5秒後に非表示にする
+    lapClearTimeout = setTimeout(() => {
+        lapClearMessage.style.opacity = '0';
+        lapClearMessage.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        lapClearTimeout = null;
+    }, 5000);
 }
 
 function triggerOsakaEvent() {
@@ -1224,20 +1322,74 @@ function handleRoll() {
     }, 600); // 0.6秒間アニメーション
 }
 
+function handleGOPass(player) {
+    player.money += 200;
+    player.laps = (player.laps || 0) + 1;
+
+    if (gameMode === 'circuit') {
+        const remainingLaps = Math.max(0, 20 - player.laps);
+        log(`${player.name} がGOを通過し、$200受け取った。 (残り周回: ${remainingLaps}周)`);
+        showLapClear(player);
+
+        if (player.laps >= 20) {
+            gameEnded = true;
+            log(`!! ${player.name} が20周に到達しました !!`);
+            setTimeout(endGame, 1000);
+        }
+
+    } else if (gameMode === 'circuit-short') {
+        // まだゴールしていない場合のみ処理
+        const alreadyFinished = circuitFinishers.some(f => f.player.id === player.id);
+
+        if (!alreadyFinished && player.laps >= CIRCUIT_SHORT_LAPS) {
+            // ゴール到達！
+            const rank = circuitFinishers.length + 1;
+            const bonus = CIRCUIT_SHORT_BONUSES[rank - 1] || 0;
+            player.money += bonus;
+            circuitFinishers.push({ player, rank, bonus });
+
+            const medals = ['🥇', '🥈', '🥉'];
+            const medal = medals[rank - 1] || '🏁';
+            log(`!! ${medal} ${player.name} が${CIRCUIT_SHORT_LAPS}周に到達！${rank}位 完走！ ボーナス +$${bonus} !!`);
+
+            showLapClear(player, true, rank);
+
+            // 3位がゴールしたらゲーム終了
+            if (circuitFinishers.length >= CIRCUIT_SHORT_FINISHER_COUNT) {
+                gameEnded = true;
+                log(`!! 3位まで完走！ゲーム終了 !!`);
+                setTimeout(endGame, 1500);
+            }
+        } else if (!alreadyFinished) {
+            const remainingLaps = Math.max(0, CIRCUIT_SHORT_LAPS - player.laps);
+            log(`${player.name} がGOを通過し、$200受け取った。 (残り周回: ${remainingLaps}周)`);
+            showLapClear(player);
+        } else {
+            // ゴール済みプレイヤーはそのまま走行継続（ログのみ）
+            log(`${player.name} がGOを通過し、$200受け取った。 (ゴール済み)`);
+        }
+
+    } else {
+        // デスマッチ
+        log(`${player.name} がGOを通過し、$200受け取った。`);
+    }
+
+    playBuySound();
+    updatePlayerStats();
+    clearDisasterEffects(player);
+}
+
 function movePlayerTo(player, targetIndex) {
     let current = player.position;
-    if (targetIndex < current && targetIndex !== 10) { // if moving forward past GO (excluding direct to jail)
-        player.money += 200;
-        log(`${player.name} がGOを通過し、$200受け取った。`);
-        playBuySound();
-        updatePlayerStats();
-        clearDisasterEffects(player);
+    if (targetIndex < current && targetIndex !== 10) { // GOを通過する場合のみ（刑務所直行を除く）
+        handleGOPass(player);
     }
     player.position = targetIndex;
     updateTokenPositions();
     playMoveSound();
 
     setTimeout(() => {
+        if (gameEnded) return;
         resolveSpace(player, BOARD_SPACES[targetIndex]);
     }, 500);
 }
@@ -1246,19 +1398,16 @@ function movePlayer(player, amount) {
     let newPos = player.position + amount;
     if (newPos >= 40) {
         newPos -= 40;
-        player.money += 200;
-        log(`${player.name} がGOを通過し、$200受け取った。`);
-        playBuySound(); // GOマスのボーナス音
-        updatePlayerStats();
-        clearDisasterEffects(player);
+        handleGOPass(player);
 
-        // どのプレイヤーが通過してもイベント発生のチャンス（確率を0.6から0.35に下方修正）
-        if (Math.random() < 0.35) {
-            // 大阪名物イベント(60%)、それ以外は地価変動(40%)
-            if (Math.random() < 0.6) {
-                triggerOsakaEvent();
-            } else {
-                triggerMarketCrash();
+        if (!gameEnded) {
+            // どのプレイヤーが通過してもイベント発生のチャンス（確率を0.35）
+            if (Math.random() < 0.35) {
+                if (Math.random() < 0.6) {
+                    triggerOsakaEvent();
+                } else {
+                    triggerMarketCrash();
+                }
             }
         }
     }
@@ -1268,6 +1417,7 @@ function movePlayer(player, amount) {
     updateTokenPositions();
 
     setTimeout(() => {
+        if (gameEnded) return;
         resolveSpace(player, BOARD_SPACES[newPos]);
     }, 500);
 }
@@ -2461,6 +2611,43 @@ function endGame() {
     const resultModal = document.getElementById('result-modal');
     const resultList = document.getElementById('result-list');
     resultList.innerHTML = '';
+
+    // ショートサーキットモード：完走ランキングを最初に表示
+    if (gameMode === 'circuit-short' && circuitFinishers.length > 0) {
+        const finishHeader = document.createElement('div');
+        finishHeader.style.cssText = 'margin-bottom: 1rem; text-align: center;';
+        finishHeader.innerHTML = `<p style="font-size:1.1rem; color:#60a5fa; margin-bottom:0.75rem;">🏁 完走ランキング</p>`;
+        resultList.appendChild(finishHeader);
+
+        const medals = ['🥇', '🥈', '🥉'];
+        const bonusColors = ['#fbbf24', '#94a3b8', '#b45309'];
+
+        circuitFinishers.forEach((f, i) => {
+            const finisherItem = document.createElement('div');
+            finisherItem.style.cssText = `
+                display: flex; justify-content: space-between; align-items: center;
+                padding: 0.75rem 1rem; margin: 0.4rem 0;
+                background: rgba(255,255,255,0.08);
+                border-radius: 0.5rem;
+                border-left: 6px solid ${f.player.color};
+                font-size: 1.1rem; font-weight: bold;
+            `;
+            finisherItem.innerHTML = `
+                <span>${medals[i] || '🏁'} ${f.player.name}</span>
+                <span style="color:${bonusColors[i] || '#fff'}">ボーナス +$${f.bonus}</span>
+            `;
+            resultList.appendChild(finisherItem);
+        });
+
+        const divider = document.createElement('hr');
+        divider.style.cssText = 'border: 1px solid rgba(255,255,255,0.1); margin: 1rem 0;';
+        resultList.appendChild(divider);
+
+        const assetHeader = document.createElement('p');
+        assetHeader.style.cssText = 'font-size:1rem; color:#94a3b8; text-align:center; margin-bottom:0.75rem;';
+        assetHeader.innerText = '💰 最終資産ランキング';
+        resultList.appendChild(assetHeader);
+    }
 
     const results = players.map(p => {
         const propertyValue = p.properties.reduce((sum, id) => sum + BOARD_SPACES[id].price, 0);
